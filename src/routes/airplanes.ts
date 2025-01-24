@@ -3,12 +3,10 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { prisma } from "../lib/prisma";
 import {
   AirplaneSchema,
-  SeedAirplaneSchema,
-  seedDataAirplanes,
+  CreateAirplaneSchema,
+  UpsertAirplaneSchema,
 } from "../data/airplanes";
-import { generateId } from "../utils/id";
-
-let airplanesVariable = seedDataAirplanes;
+import slugify from "slugify";
 
 export const airplanesRoute = new OpenAPIHono();
 
@@ -31,9 +29,7 @@ airplanesRoute.openapi(
     },
   }),
   async (c) => {
-    const airplanes = await prisma.airplane.findMany({
-      include: { manufacturer: true },
-    });
+    const airplanes = await prisma.airplane.findMany();
 
     return c.json(airplanes);
   }
@@ -47,24 +43,25 @@ airplanesRoute.openapi(
   createRoute({
     tags,
     method: "get",
-    path: "/:id",
+    path: "/:slug",
     request: {
-      params: z.object({ id: z.coerce.number().int().positive() }),
+      params: z.object({ slug: z.string() }),
     },
     responses: {
       404: { description: "Airplane not found" },
       200: {
-        description: "Get one airplane by ID",
-        content: { "application/json": { schema: SeedAirplaneSchema } },
+        description: "Get one airplane by slug",
+        content: { "application/json": { schema: UpsertAirplaneSchema } },
       },
     },
   }),
-  (c) => {
-    const { id } = c.req.valid("param");
+  async (c) => {
+    const { slug } = c.req.valid("param");
 
-    const airplane = airplanesVariable.find((airplane) => airplane.id === id);
-
-    if (!airplane) return c.notFound();
+    // TODO: Get airplane by slug
+    const airplane = await prisma.airplane.findUnique({
+      where: { slug },
+    });
 
     return c.json(airplane);
   }
@@ -80,28 +77,30 @@ airplanesRoute.openapi(
       body: {
         description: "New airplane data to add",
         content: {
-          "application/json": { schema: SeedAirplaneSchema.omit({ id: true }) },
+          "application/json": { schema: CreateAirplaneSchema },
         },
       },
     },
     responses: {
       201: {
         description: "New airplane added",
-        content: { "application/json": { schema: SeedAirplaneSchema } },
+        content: { "application/json": { schema: AirplaneSchema } },
       },
     },
   }),
-  (c) => {
+  async (c) => {
     const body = c.req.valid("json");
 
-    const newAirplaneData = {
-      ...body,
-      id: generateId(airplanesVariable),
-    };
+    const newAirplane = await prisma.airplane.create({
+      data: {
+        ...body,
+        slug: slugify(`${body.manufacturer}-${body.family}`, { lower: true }),
+        // airbus-a220
+        // boeing-737
+      },
+    });
 
-    airplanesVariable = [...airplanesVariable, newAirplaneData];
-
-    return c.json(newAirplaneData, 201);
+    return c.json(newAirplane, 201);
   }
 );
 
@@ -116,7 +115,7 @@ airplanesRoute.openapi(
     },
   }),
   (c) => {
-    airplanesVariable = [];
+    // airplanesVariable = [];
 
     return c.json({ message: "All airplanes deleted" });
   }
@@ -129,7 +128,7 @@ airplanesRoute.openapi(
     method: "delete",
     path: "/:id",
     request: {
-      params: z.object({ id: z.coerce.number().int().positive() }),
+      params: z.object({ id: z.string() }),
     },
     responses: {
       404: { description: "Airplane not found" },
@@ -139,14 +138,7 @@ airplanesRoute.openapi(
   (c) => {
     const { id } = c.req.valid("param");
 
-    const updatedAirplanes = airplanesVariable.filter(
-      (airplane) => airplane.id !== id
-    );
-
-    if (airplanesVariable.length === updatedAirplanes.length)
-      return c.notFound();
-
-    airplanesVariable = updatedAirplanes;
+    // TODO: Delete airplane by ID
 
     return c.json({ message: "Airplane deleted" });
   }
@@ -159,12 +151,12 @@ airplanesRoute.openapi(
     method: "patch",
     path: "/:id",
     request: {
-      params: z.object({ id: z.coerce.number().int().positive() }),
+      params: z.object({ id: z.string() }),
       body: {
         description: "New airplane data to update",
         content: {
           "application/json": {
-            schema: SeedAirplaneSchema.omit({ id: true }).partial(),
+            schema: UpsertAirplaneSchema,
           },
         },
       },
@@ -178,18 +170,8 @@ airplanesRoute.openapi(
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
 
-    const updatedAirplanes = airplanesVariable.map((airplane) => {
-      if (airplane.id === id) return { ...airplane, ...body };
-      return airplane;
-    });
+    // TODO: Update airplane by ID
 
-    airplanesVariable = updatedAirplanes;
-
-    const updatedAirplane = airplanesVariable.find(
-      (airplane) => airplane.id === id
-    );
-    if (!updatedAirplane) return c.notFound();
-
-    return c.json(updatedAirplane);
+    return c.json({});
   }
 );

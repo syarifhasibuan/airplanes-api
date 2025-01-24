@@ -11,12 +11,14 @@ datasource db {
 model Airplane {
   id String @id @default(cuid()) @db.VarChar
 
-  slug   String @unique @db.VarChar
-  family String @db.VarChar
-  year   Int    @db.SmallInt
+  slug String @unique @db.VarChar
 
-  manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id])
-  manufacturerId String       @db.VarChar
+  family       String @db.VarChar
+  year         Int    @db.SmallInt
+  manufacturer String @db.VarChar
+
+  // manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id])
+  // manufacturerId String       @db.VarChar
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -28,7 +30,7 @@ model Manufacturer {
   slug String @unique @db.VarChar
   name String @db.VarChar
 
-  airplanes Airplane[]
+  // airplanes Airplane[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

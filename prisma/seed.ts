@@ -11,25 +11,27 @@ async function seed() {
       slug: slugify(airplane.family),
       family: airplane.family,
       year: airplane.year,
-      manufacturer: {
-        connectOrCreate: {
-          where: { slug: slugify(airplane.manufacturer) },
-          create: {
-            slug: slugify(airplane.manufacturer),
-            name: airplane.manufacturer,
-          },
-        },
-      },
+      manufacturer: airplane.manufacturer,
+
+      // LATER: Uncomment this code when Airplane has relation with Manufacturer model
+      // manufacturer: {
+      //   connectOrCreate: {
+      //     where: { slug: slugify(airplane.manufacturer) },
+      //     create: {
+      //       slug: slugify(airplane.manufacturer),
+      //       name: airplane.manufacturer,
+      //     },
+      //   },
+      // },
     };
 
     const newAirplane = await prisma.airplane.upsert({
       where: { slug: slugify(airplane.family) },
       update: airplaneData,
       create: airplaneData,
-      include: { manufacturer: { select: { name: true } } },
     });
 
-    console.log(`✈️ ${newAirplane.manufacturer.name} ${newAirplane.family}`);
+    console.log(`✈️ ${newAirplane.manufacturer} ${newAirplane.family}`);
   }
 }
 
