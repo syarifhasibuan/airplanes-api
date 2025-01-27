@@ -1,6 +1,11 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { AirplaneSchema, dataAirplanes } from "../data/airplanes";
+import {
+  AirplaneSchema,
+  dataAirplanes,
+  PrismaAirplaneSchema,
+} from "../data/airplanes";
 import { generateId } from "../utils/id";
+import { prisma } from "../lib/prisma";
 
 let airplanes = dataAirplanes;
 
@@ -18,11 +23,14 @@ airplanesRoute.openapi(
     responses: {
       200: {
         description: "Get all airplanes",
-        content: { "application/json": { schema: z.array(AirplaneSchema) } },
+        content: {
+          "application/json": { schema: z.array(PrismaAirplaneSchema) },
+        },
       },
     },
   }),
-  (c) => {
+  async (c) => {
+    const airplanes = await prisma.airplane.findMany();
     return c.json(airplanes);
   }
 );

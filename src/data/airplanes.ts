@@ -15,6 +15,15 @@ export const AirplaneSchema = z.object({
   isAvailable: z.boolean().optional(),
 });
 
+export const PrismaAirplaneSchema = z.object({
+  id: z.string(),
+  slug: z.string(),
+  manufacturerId: z.string(),
+  family: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
 export type Airplane = z.infer<typeof AirplaneSchema>;
 
 export const dataAirplanes: Airplane[] = [
