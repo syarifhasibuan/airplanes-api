@@ -14,10 +14,20 @@ datasource db {
 }
 
 model Airplane {
-  id           String   @id @default(cuid())
-  family       String
-  manufacturer String
-  slug         String   @unique
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  family         String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
+  manufacturerId String
+}
+
+model Manufacturer {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  name      String
+  airplanes Airplane[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
