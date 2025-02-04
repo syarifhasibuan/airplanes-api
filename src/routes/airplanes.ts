@@ -35,6 +35,37 @@ airplanesRoute.openapi(
   }
 );
 
+// GET /airplanes/:slug
+airplanesRoute.openapi(
+  createRoute({
+    tags,
+    summary: "Get airplane by slug",
+    method: "get",
+    path: "/:slug",
+    request: {
+      params: z.object({ slug: z.string() }),
+    },
+    responses: {
+      404: { description: "Airplane not found" },
+      200: {
+        description: "Get one airplane by slug",
+        content: { "application/json": { schema: PrismaAirplaneSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const { slug } = c.req.valid("param");
+
+    const airplane = await prisma.airplane.findUnique({
+      where: { slug },
+    });
+
+    if (!airplane) return c.notFound();
+
+    return c.json(airplane);
+  }
+);
+
 // GET /airplanes/search?name=... [{...}]
 // TODO
 
@@ -105,14 +136,17 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
+    summary: "Delete all airplanes",
     method: "delete",
     path: "/",
     responses: {
       200: { description: "All airplanes deleted" },
     },
   }),
-  (c) => {
-    airplanes = [];
+  async (c) => {
+    // airplanes = [];
+
+    await prisma.airplane.deleteMany();
 
     return c.json({ message: "All airplanes deleted" });
   }
@@ -140,6 +174,39 @@ airplanesRoute.openapi(
     if (airplanes.length === updatedAirplanes.length) return c.notFound();
 
     airplanes = updatedAirplanes;
+
+    return c.json({ message: "Airplane deleted" });
+  }
+);
+
+// DELETE /airplanes/:slug
+airplanesRoute.openapi(
+  createRoute({
+    tags,
+    summary: "Delete airplane by slug",
+    method: "delete",
+    path: "/:slug",
+    request: {
+      params: z.object({ slug: z.string() }),
+    },
+    responses: {
+      404: { description: "Airplane not found" },
+      200: { description: "Airplane deleted" },
+    },
+  }),
+  async (c) => {
+    const { slug } = c.req.valid("param");
+    console.log(slug);
+
+    const airplane = await prisma.airplane.findUnique({
+      where: { slug },
+    });
+
+    if (!airplane) return c.notFound();
+
+    await prisma.airplane.delete({
+      where: { slug },
+    });
 
     return c.json({ message: "Airplane deleted" });
   }

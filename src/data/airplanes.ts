@@ -24,7 +24,16 @@ export const PrismaAirplaneSchema = z.object({
   updatedAt: z.date(),
 });
 
+export const SeedAirplaneSchema = PrismaAirplaneSchema.omit({
+  id: true,
+  slug: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type Airplane = z.infer<typeof AirplaneSchema>;
+
+export type SeedAirplane = z.infer<typeof SeedAirplaneSchema>;
 
 export const dataAirplanes: Airplane[] = [
   {
@@ -36,7 +45,31 @@ export const dataAirplanes: Airplane[] = [
   {
     id: 2,
     manufacturer: "Boeing",
-    family: "737",
+    family: "B737",
     year: 1967,
+  },
+  {
+    id: 3,
+    manufacturer: "Boeing",
+    family: "B747",
+    year: 1999,
+  },
+  {
+    id: 4,
+    manufacturer: "Airbus",
+    family: "A380",
+    year: 2000,
+  },
+  {
+    id: 5,
+    manufacturer: "Embraer",
+    family: "E190",
+    year: 2000,
+  },
+  {
+    id: 6,
+    manufacturer: "Bombardier",
+    family: "CRJ",
+    year: 2000,
   },
 ];
