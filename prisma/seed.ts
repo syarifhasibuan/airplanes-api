@@ -4,10 +4,14 @@ import slugify from "slugify";
 
 async function seedAirplanes() {
   for (const airplane of dataAirplanes) {
-    const airplaneData = {
-      slug: slugify("".concat(airplane.manufacturer, " ", airplane.family), {
+    const slug = slugify(
+      "".concat(airplane.manufacturer, " ", airplane.family),
+      {
         lower: true,
-      }),
+      }
+    );
+    const airplaneData = {
+      slug: slug,
       family: airplane.family,
       manufacturer: {
         connectOrCreate: {
@@ -22,7 +26,7 @@ async function seedAirplanes() {
 
     const newAirplane = await prisma.airplane.upsert({
       where: {
-        slug: slugify("".concat(airplane.manufacturer, " ", airplane.family)),
+        slug: slug,
       },
       create: airplaneData,
       update: airplaneData,
