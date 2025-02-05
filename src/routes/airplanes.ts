@@ -1,19 +1,14 @@
+import { Prisma } from "@prisma/client";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import {
-  AirplaneSchema,
-  dataAirplanes,
-  PrismaAirplaneSchema,
-} from "../data/airplanes";
-import { generateId } from "../utils/id";
-import { prisma } from "../lib/prisma";
 
-let airplanes = dataAirplanes;
+import { SeedAirplaneSchema, PrismaAirplaneSchema } from "../data/airplanes";
+import { prisma } from "../lib/prisma";
 
 export const airplanesRoute = new OpenAPIHono();
 
 const tags = ["Airplanes"];
 
-// GET /airplanes
+// ✅ GET /airplanes
 airplanesRoute.openapi(
   createRoute({
     tags,
@@ -35,7 +30,7 @@ airplanesRoute.openapi(
   }
 );
 
-// GET /airplanes/:slug
+// ✅ GET /airplanes/:slug
 airplanesRoute.openapi(
   createRoute({
     tags,
@@ -67,37 +62,9 @@ airplanesRoute.openapi(
 );
 
 // GET /airplanes/search?name=... [{...}]
-// TODO
+// LATER
 
-// GET /airplanes/:id
-airplanesRoute.openapi(
-  createRoute({
-    tags,
-    method: "get",
-    path: "/:id",
-    request: {
-      params: z.object({ id: z.coerce.number().int().positive() }),
-    },
-    responses: {
-      404: { description: "Airplane not found" },
-      200: {
-        description: "Get one airplane by ID",
-        content: { "application/json": { schema: AirplaneSchema } },
-      },
-    },
-  }),
-  (c) => {
-    const { id } = c.req.valid("param");
-
-    const airplane = airplanes.find((airplane) => airplane.id === id);
-
-    if (!airplane) return c.notFound();
-
-    return c.json(airplane);
-  }
-);
-
-// POST /airplanes
+// ❌ POST /airplanes
 airplanesRoute.openapi(
   createRoute({
     tags,
@@ -107,32 +74,33 @@ airplanesRoute.openapi(
       body: {
         description: "New airplane data to add",
         content: {
-          "application/json": { schema: AirplaneSchema.omit({ id: true }) },
+          "application/json": { schema: SeedAirplaneSchema.omit({ id: true }) },
         },
       },
     },
     responses: {
       201: {
         description: "New airplane added",
-        content: { "application/json": { schema: AirplaneSchema } },
+        content: { "application/json": { schema: SeedAirplaneSchema } },
       },
     },
   }),
+  // @ts-ignore
   (c) => {
     const body = c.req.valid("json");
 
-    const newAirplaneData = {
-      ...body,
-      id: generateId(airplanes),
-    };
+    // const newAirplaneData = {
+    //   ...body,
+    //   id: generateId(airplanes),
+    // };
 
-    airplanes = [...airplanes, newAirplaneData];
+    // airplanes = [...airplanes, newAirplaneData];
 
-    return c.json(newAirplaneData, 201);
+    return c.json(null, 201);
   }
 );
 
-// DELETE /airplanes
+// ✅ DELETE /airplanes
 airplanesRoute.openapi(
   createRoute({
     tags,
@@ -140,19 +108,16 @@ airplanesRoute.openapi(
     method: "delete",
     path: "/",
     responses: {
-      200: { description: "All airplanes deleted" },
+      200: { description: "All airplanes data deleted" },
     },
   }),
   async (c) => {
-    // airplanes = [];
-
     await prisma.airplane.deleteMany();
-
-    return c.json({ message: "All airplanes deleted" });
+    return c.json({ message: "All airplanes data deleted" });
   }
 );
 
-// DELETE /airplanes/:slug
+// ✅ DELETE /airplanes/:slug
 airplanesRoute.openapi(
   createRoute({
     tags,
@@ -163,29 +128,43 @@ airplanesRoute.openapi(
       params: z.object({ slug: z.string() }),
     },
     responses: {
-      404: { description: "Airplane not found" },
+      400: { description: "Delete airplane failed" },
       200: { description: "Airplane deleted" },
     },
   }),
   async (c) => {
     const { slug } = c.req.valid("param");
-    console.log(slug);
 
-    const airplane = await prisma.airplane.findUnique({
-      where: { slug },
-    });
+    try {
+      const deletedAirplane = await prisma.airplane.delete({
+        where: { slug },
+      });
 
-    if (!airplane) return c.notFound();
-
-    await prisma.airplane.delete({
-      where: { slug },
-    });
-
-    return c.json({ message: "Airplane deleted" });
+      return c.json({
+        message: "Airplane deleted",
+        airplane: deletedAirplane,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return c.json(
+          {
+            message: "Delete airplane failed because slug doesn't exist",
+            slug,
+            error,
+          },
+          400
+        );
+      }
+      return c.json({ message: "Delete airplane failed", slug, error }, 400);
+    }
   }
 );
 
-// PATCH /airplanes/:id
+// ❌ PATCH /airplanes/:id
+// TODO: PATCH /airplanes/:slug
 airplanesRoute.openapi(
   createRoute({
     tags,
@@ -197,7 +176,7 @@ airplanesRoute.openapi(
         description: "New airplane data to update",
         content: {
           "application/json": {
-            schema: AirplaneSchema.omit({ id: true }).partial(),
+            schema: SeedAirplaneSchema.omit({ id: true }).partial(),
           },
         },
       },
@@ -211,16 +190,16 @@ airplanesRoute.openapi(
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
 
-    const updatedAirplanes = airplanes.map((airplane) => {
-      if (airplane.id === id) return { ...airplane, ...body };
-      return airplane;
-    });
+    // const updatedAirplanes = airplanes.map((airplane) => {
+    //   if (airplane.id === id) return { ...airplane, ...body };
+    //   return airplane;
+    // });
 
-    airplanes = updatedAirplanes;
+    // airplanes = updatedAirplanes;
 
-    const updatedAirplane = airplanes.find((airplane) => airplane.id === id);
-    if (!updatedAirplane) return c.notFound();
+    // const updatedAirplane = airplanes.find((airplane) => airplane.id === id);
+    // if (!updatedAirplane) return c.notFound();
 
-    return c.json(updatedAirplane);
+    return c.json(null);
   }
 );
