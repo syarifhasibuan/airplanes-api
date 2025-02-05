@@ -9,14 +9,16 @@ async function seedAirplanes() {
       { lower: true }
     );
 
+    const manufacturerSlug = slugify(airplane.manufacturer, { lower: true });
+
     const airplaneData = {
       slug: airplaneSlug,
       family: airplane.family,
       manufacturer: {
         connectOrCreate: {
-          where: { slug: slugify(airplane.manufacturer, { lower: true }) },
+          where: { slug: manufacturerSlug },
           create: {
-            slug: slugify(airplane.manufacturer, { lower: true }),
+            slug: manufacturerSlug,
             name: airplane.manufacturer,
           },
         },

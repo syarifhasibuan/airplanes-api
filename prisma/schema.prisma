@@ -21,6 +21,8 @@ model Airplane {
   manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
   manufacturerId String
 
+  // TODO year  Int
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
