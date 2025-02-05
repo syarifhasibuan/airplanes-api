@@ -152,33 +152,6 @@ airplanesRoute.openapi(
   }
 );
 
-// DELETE /airplanes/:id
-airplanesRoute.openapi(
-  createRoute({
-    tags,
-    method: "delete",
-    path: "/:id",
-    request: {
-      params: z.object({ id: z.coerce.number().int().positive() }),
-    },
-    responses: {
-      404: { description: "Airplane not found" },
-      200: { description: "Airplane deleted" },
-    },
-  }),
-  (c) => {
-    const { id } = c.req.valid("param");
-
-    const updatedAirplanes = airplanes.filter((airplane) => airplane.id !== id);
-
-    if (airplanes.length === updatedAirplanes.length) return c.notFound();
-
-    airplanes = updatedAirplanes;
-
-    return c.json({ message: "Airplane deleted" });
-  }
-);
-
 // DELETE /airplanes/:slug
 airplanesRoute.openapi(
   createRoute({
