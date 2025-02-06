@@ -1,4 +1,4 @@
-import { Airplane, dataAirplanes, SeedAirplane } from "../src/data/airplanes";
+import { dataAirplanes, SeedAirplane } from "../src/data/airplanes";
 import { prisma } from "../src/lib/prisma";
 import slugify from "slugify";
 

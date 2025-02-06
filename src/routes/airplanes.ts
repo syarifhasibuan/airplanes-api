@@ -1,8 +1,14 @@
 import { Prisma } from "@prisma/client";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { SeedAirplaneSchema, PrismaAirplaneSchema } from "../data/airplanes";
+import {
+  SeedAirplaneSchema,
+  PrismaAirplaneSchema,
+  PostAirplaneSchema,
+} from "../data/airplanes";
 import { prisma } from "../lib/prisma";
+import slugify from "slugify";
+import { makeStrictEnum } from "@prisma/client/runtime/library";
 
 export const airplanesRoute = new OpenAPIHono();
 
@@ -12,7 +18,7 @@ const tags = ["Airplanes"];
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Get all airplanes",
+    summary: "Get /airplanes",
     method: "get",
     path: "/",
     responses: {
@@ -34,7 +40,7 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Get airplane by slug",
+    summary: "Get /airplanes/:slug",
     method: "get",
     path: "/:slug",
     request: {
@@ -64,39 +70,52 @@ airplanesRoute.openapi(
 // GET /airplanes/search?name=... [{...}]
 // LATER
 
-// ❌ POST /airplanes
+// ✅ POST /airplanes
 airplanesRoute.openapi(
   createRoute({
     tags,
+    summary: "Post /airplanes",
     method: "post",
     path: "/",
     request: {
       body: {
         description: "New airplane data to add",
-        content: {
-          "application/json": { schema: SeedAirplaneSchema.omit({ id: true }) },
-        },
+        content: { "application/json": { schema: PostAirplaneSchema } },
       },
     },
     responses: {
       201: {
         description: "New airplane added",
-        content: { "application/json": { schema: SeedAirplaneSchema } },
+        content: { "application/json": { schema: PostAirplaneSchema } },
       },
     },
   }),
-  // @ts-ignore
-  (c) => {
+  async (c) => {
     const body = c.req.valid("json");
 
-    // const newAirplaneData = {
-    //   ...body,
-    //   id: generateId(airplanes),
-    // };
+    const airplaneSlug = slugify(`${body.manufacturer}-${body.family}`, {
+      lower: true,
+    });
 
-    // airplanes = [...airplanes, newAirplaneData];
+    const manufacturerSlug = slugify(body.manufacturer, { lower: true });
 
-    return c.json(null, 201);
+    const newAirplaneData = {
+      slug: airplaneSlug,
+      family: body.family,
+      manufacturer: {
+        connectOrCreate: {
+          where: { slug: body.manufacturer },
+          create: { slug: manufacturerSlug, name: body.manufacturer },
+        },
+      },
+    };
+
+    console.log(newAirplaneData);
+    const newAirplane = await prisma.airplane.create({
+      data: newAirplaneData,
+    });
+
+    return c.json(body);
   }
 );
 
@@ -104,7 +123,7 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Delete all airplanes",
+    summary: "Delete /airplanes",
     method: "delete",
     path: "/",
     responses: {
@@ -121,7 +140,7 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Delete airplane by slug",
+    summary: "Delete /airplanes/:slug",
     method: "delete",
     path: "/:slug",
     request: {
@@ -168,16 +187,15 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
+    summary: "Patch /airplanes/:slug",
     method: "patch",
-    path: "/:id",
+    path: "/:slug",
     request: {
-      params: z.object({ id: z.coerce.number().int().positive() }),
+      params: z.object({ slug: z.string() }),
       body: {
         description: "New airplane data to update",
         content: {
-          "application/json": {
-            schema: SeedAirplaneSchema.omit({ id: true }).partial(),
-          },
+          "application/json": { schema: PostAirplaneSchema },
         },
       },
     },
@@ -186,20 +204,31 @@ airplanesRoute.openapi(
       200: { description: "Airplane updated" },
     },
   }),
-  (c) => {
-    const { id } = c.req.valid("param");
+  async (c) => {
+    const { slug } = c.req.valid("param");
     const body = c.req.valid("json");
 
-    // const updatedAirplanes = airplanes.map((airplane) => {
-    //   if (airplane.id === id) return { ...airplane, ...body };
-    //   return airplane;
-    // });
+    const airplaneSlug = slugify(`${body.manufacturer}-${body.family}`, {
+      lower: true,
+    });
+    const manufacturerSlug = slugify(body.manufacturer, { lower: true });
 
-    // airplanes = updatedAirplanes;
+    const updatedAirplaneData = {
+      slug: airplaneSlug,
+      family: body.family,
+      manufacturer: {
+        connectOrCreate: {
+          where: { slug: body.manufacturer },
+          create: { slug: manufacturerSlug, name: body.manufacturer },
+        },
+      },
+    };
 
-    // const updatedAirplane = airplanes.find((airplane) => airplane.id === id);
-    // if (!updatedAirplane) return c.notFound();
+    const updatedAirplane = await prisma.airplane.update({
+      where: { slug },
+      data: updatedAirplaneData,
+    });
 
-    return c.json(null);
+    return c.json({ message: "Airplane updated", airplane: updatedAirplane });
   }
 );

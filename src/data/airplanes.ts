@@ -25,6 +25,16 @@ export const SeedAirplaneSchema = z.object({
   isAvailable: z.boolean().optional(),
 });
 
+export const PostAirplaneSchema = PrismaAirplaneSchema.extend({
+  manufacturer: z.string(),
+}).omit({
+  id: true,
+  slug: true,
+  manufacturerId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type SeedAirplane = z.infer<typeof SeedAirplaneSchema>;
 
 export const dataAirplanes: SeedAirplane[] = [
