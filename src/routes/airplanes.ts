@@ -8,7 +8,6 @@ import {
 } from "../data/airplanes";
 import { prisma } from "../lib/prisma";
 import slugify from "slugify";
-import { makeStrictEnum } from "@prisma/client/runtime/library";
 
 export const airplanesRoute = new OpenAPIHono();
 
@@ -88,34 +87,40 @@ airplanesRoute.openapi(
         description: "New airplane added",
         content: { "application/json": { schema: PostAirplaneSchema } },
       },
+      401: { description: "New airplane failed" },
     },
   }),
   async (c) => {
     const body = c.req.valid("json");
 
-    const airplaneSlug = slugify(`${body.manufacturer}-${body.family}`, {
-      lower: true,
-    });
+    try {
+      const airplaneSlug = slugify(`${body.manufacturer}-${body.family}`, {
+        lower: true,
+      });
 
-    const manufacturerSlug = slugify(body.manufacturer, { lower: true });
+      const manufacturerSlug = slugify(body.manufacturer, { lower: true });
 
-    const newAirplaneData = {
-      slug: airplaneSlug,
-      family: body.family,
-      manufacturer: {
-        connectOrCreate: {
-          where: { slug: body.manufacturer },
-          create: { slug: manufacturerSlug, name: body.manufacturer },
+      // const newAirplaneData = {};
+
+      console.log(airplaneSlug);
+      const newAirplane = await prisma.airplane.create({
+        data: {
+          slug: airplaneSlug,
+          family: body.family,
+          manufacturer: {
+            connectOrCreate: {
+              where: { slug: body.manufacturer },
+              create: { slug: manufacturerSlug, name: body.manufacturer },
+            },
+          },
         },
-      },
-    };
+      });
 
-    console.log(newAirplaneData);
-    const newAirplane = await prisma.airplane.create({
-      data: newAirplaneData,
-    });
-
-    return c.json(body);
+      return c.json(body);
+    } catch (error) {
+      console.log(error);
+      return c.json({ message: "New airplane failed", error }, 400);
+    }
   }
 );
 
