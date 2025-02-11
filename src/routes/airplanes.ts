@@ -1,11 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import {
-  SeedAirplaneSchema,
-  PrismaAirplaneSchema,
-  InputAirplaneSchema,
-} from "../data/airplanes";
+import { PrismaAirplaneSchema, InputAirplaneSchema } from "../data/airplanes";
 import { prisma } from "../lib/prisma";
 import slugify from "slugify";
 
@@ -17,7 +13,7 @@ const tags = ["Airplanes"];
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Get /airplanes",
+    summary: "Get all airplanes",
     method: "get",
     path: "/",
     responses: {
@@ -39,7 +35,7 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Get /airplanes/:slug",
+    summary: "Get airplane by slug",
     method: "get",
     path: "/:slug",
     request: {
@@ -73,7 +69,7 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Post /airplanes",
+    summary: "Add new airplane",
     method: "post",
     path: "/",
     request: {
@@ -131,7 +127,7 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Delete /airplanes",
+    summary: "Delete all airplanes data",
     method: "delete",
     path: "/",
     responses: {
@@ -148,7 +144,7 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Delete /airplanes/:slug",
+    summary: "Delete an airplane data by slug",
     method: "delete",
     path: "/:slug",
     request: {
@@ -199,7 +195,7 @@ airplanesRoute.openapi(
 airplanesRoute.openapi(
   createRoute({
     tags,
-    summary: "Patch /airplanes/:slug",
+    summary: "Patch an airplane data by slug",
     method: "patch",
     path: "/:slug",
     request: {
