@@ -80,6 +80,7 @@ manufacturersRoute.openapi(
 
       return c.json(newManufacturer);
     } catch (error) {
+      // Question: How to handle unique slug error?
       console.error(error);
       return c.json(
         {
