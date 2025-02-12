@@ -26,7 +26,9 @@ airplanesRoute.openapi(
     },
   }),
   async (c) => {
-    const airplanes = await prisma.airplane.findMany();
+    const airplanes = await prisma.airplane.findMany({
+      include: { manufacturer: true },
+    });
     return c.json(airplanes);
   }
 );
@@ -54,6 +56,7 @@ airplanesRoute.openapi(
 
     const airplane = await prisma.airplane.findUnique({
       where: { slug },
+      include: { manufacturer: true },
     });
 
     if (!airplane) return c.notFound();
@@ -106,6 +109,7 @@ airplanesRoute.openapi(
             },
           },
         },
+        include: { manufacturer: true },
       });
 
       return c.json(newAirplane);
@@ -235,6 +239,7 @@ airplanesRoute.openapi(
             },
           },
         },
+        include: { manufacturer: true },
       });
 
       return c.json(updatedAirplane);
