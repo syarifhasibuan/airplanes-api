@@ -1,10 +1,11 @@
+import { Prisma } from "@prisma/client";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import slugify from "slugify";
 import {
   InputManufacturerSchema,
   PrismaManufacturerSchema,
 } from "../data/manufacturers";
 import { prisma } from "../lib/prisma";
-import slugify from "slugify";
 
 export const manufacturersRoute = new OpenAPIHono();
 
@@ -29,7 +30,17 @@ manufacturersRoute.openapi(
   }),
   async (c) => {
     try {
-      const manufacturers = await prisma.manufacturer.findMany();
+      const manufacturers = await prisma.manufacturer.findMany({
+        include: {
+          airplanes: {
+            select: {
+              id: true,
+              slug: true,
+              family: true,
+            },
+          },
+        },
+      });
       return c.json(manufacturers);
     } catch (error) {
       console.error(error);
@@ -69,8 +80,8 @@ manufacturersRoute.openapi(
     const body = c.req.valid("json");
 
     const newManufacturerData = {
-      slug: slugify(body.name, { lower: true }),
-      name: body.name,
+      ...body,
+      slug: body.slug ?? slugify(body.name, { lower: true }),
     };
 
     try {
@@ -80,15 +91,22 @@ manufacturersRoute.openapi(
 
       return c.json(newManufacturer);
     } catch (error) {
-      // Question: How to handle unique slug error?
-      console.error(error);
-      return c.json(
-        {
-          message: "New manufacturer failed",
-          error,
-        },
-        400
-      );
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const targets = error.meta?.target as string[];
+        return c.json(
+          {
+            message: `Error ${targets} already exist, unique constraint violation`,
+            error,
+          },
+          400
+        );
+      } else {
+        console.error(error);
+        return c.json({ message: "New manufacturer failed", error }, 400);
+      }
     }
   }
 );

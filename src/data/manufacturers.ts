@@ -9,5 +9,6 @@ export const PrismaManufacturerSchema = z.object({
 });
 
 export const InputManufacturerSchema = z.object({
+  slug: z.string().optional(),
   name: z.string(),
 });
