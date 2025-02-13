@@ -6,12 +6,10 @@ import { manufacturersRoute } from "./routes/manufacturers";
 
 const app = new OpenAPIHono();
 
-const apiRoutes = app
+app
   .basePath("/")
   .route("/airplanes", airplanesRoute)
-  .route("/manufacturers", manufacturersRoute);
-
-apiRoutes
+  .route("/manufacturers", manufacturersRoute)
   .doc("/openapi.json", {
     openapi: "3.1.1",
     info: {
@@ -19,6 +17,11 @@ apiRoutes
       version: "1.0.0",
     },
   })
-  .get("/", apiReference({ spec: { url: "/openapi.json" } }));
+  .get(
+    "/",
+    apiReference({
+      spec: { url: "/openapi.json" },
+    })
+  );
 
 export default app;

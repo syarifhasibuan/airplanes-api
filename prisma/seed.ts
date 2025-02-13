@@ -3,6 +3,9 @@ import { prisma } from "../src/lib/prisma";
 import slugify from "slugify";
 
 async function seedAirplanes() {
+  // await prisma.airplane.deleteMany();
+  // await prisma.manufacturer.deleteMany();
+
   for (const airplane of dataAirplanes) {
     const airplaneSlug = slugify(
       `${airplane.manufacturer}-${airplane.family}`,
