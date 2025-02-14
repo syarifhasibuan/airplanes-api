@@ -79,9 +79,10 @@ manufacturersRoute.openapi(
   async (c) => {
     const body = c.req.valid("json");
 
+    console.log(body.slug ? body.slug : slugify(body.name, { lower: true }));
     const newManufacturerData = {
       ...body,
-      slug: body.slug ?? slugify(body.name, { lower: true }),
+      slug: body.slug ? body.slug : slugify(body.name, { lower: true }),
     };
 
     try {
@@ -107,6 +108,53 @@ manufacturersRoute.openapi(
         console.error(error);
         return c.json({ message: "New manufacturer failed", error }, 400);
       }
+    }
+  }
+);
+
+// GET /manufacturers/:slug
+manufacturersRoute.openapi(
+  createRoute({
+    tags,
+    summary: "Get manufacturer by slug",
+    method: "get",
+    path: "/:slug",
+    request: { params: z.object({ slug: z.string() }) },
+    responses: {
+      404: { description: "Manufacturer not found" },
+      400: { description: "Get manufacturer by slug failed" },
+      200: {
+        description: "Get manufacturer by slug",
+        content: { "application/json": { schema: PrismaManufacturerSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const { slug } = c.req.valid("param");
+    try {
+      const manufacturer = await prisma.manufacturer.findUnique({
+        where: { slug },
+        include: {
+          airplanes: {
+            select: {
+              id: true,
+              slug: true,
+              family: true,
+            },
+          },
+        },
+      });
+      if (!manufacturer) return c.notFound();
+      return c.json(manufacturer);
+    } catch (error) {
+      console.error(error);
+      return c.json(
+        {
+          message: "Get manufacturer by slug failed",
+          error,
+        },
+        400
+      );
     }
   }
 );
