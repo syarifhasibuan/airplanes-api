@@ -1,9 +1,13 @@
 import { Prisma } from "@prisma/client";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { AirplaneSchema, InputAirplaneSchema } from "../data/airplanes";
+import {
+  AirplaneSchema,
+  AirplaneCreateSchema,
+  AirplaneWithManufacturerSchema,
+} from "../data/airplanes";
 import { prisma } from "../lib/prisma";
-import slugify from "slugify";
+import { convertSlug } from "../lib/slug";
 
 export const airplanesRoute = new OpenAPIHono();
 
@@ -20,7 +24,9 @@ airplanesRoute.openapi(
       200: {
         description: "Get all airplanes",
         content: {
-          "application/json": { schema: z.array(AirplaneSchema) },
+          "application/json": {
+            schema: z.array(AirplaneWithManufacturerSchema),
+          },
         },
       },
     },
@@ -66,7 +72,7 @@ airplanesRoute.openapi(
 );
 
 // GET /airplanes/search?name=... [{...}]
-// LATER
+// TODO: LATER
 
 // ✅ POST /airplanes
 airplanesRoute.openapi(
@@ -78,7 +84,7 @@ airplanesRoute.openapi(
     request: {
       body: {
         description: "New airplane data to add",
-        content: { "application/json": { schema: InputAirplaneSchema } },
+        content: { "application/json": { schema: AirplaneCreateSchema } },
       },
     },
     responses: {
@@ -92,10 +98,8 @@ airplanesRoute.openapi(
   async (c) => {
     const body = c.req.valid("json");
 
-    const airplaneSlug = slugify(`${body.manufacturer}-${body.family}`, {
-      lower: true,
-    });
-    const manufacturerSlug = slugify(body.manufacturer, { lower: true });
+    const airplaneSlug = convertSlug(`${body.manufacturer}-${body.family}`);
+    const manufacturerSlug = convertSlug(body.manufacturer);
 
     try {
       const newAirplane = await prisma.airplane.create({
@@ -206,7 +210,7 @@ airplanesRoute.openapi(
       params: z.object({ slug: z.string() }),
       body: {
         description: "New airplane data to update",
-        content: { "application/json": { schema: InputAirplaneSchema } },
+        content: { "application/json": { schema: AirplaneCreateSchema } },
       },
     },
     responses: {
@@ -221,10 +225,8 @@ airplanesRoute.openapi(
     const { slug } = c.req.valid("param");
     const body = c.req.valid("json");
 
-    const airplaneSlug = slugify(`${body.manufacturer}-${body.family}`, {
-      lower: true,
-    });
-    const manufacturerSlug = slugify(body.manufacturer, { lower: true });
+    const airplaneSlug = convertSlug(`${body.manufacturer}-${body.family}`);
+    const manufacturerSlug = convertSlug(body.manufacturer);
 
     try {
       const updatedAirplane = await prisma.airplane.update({

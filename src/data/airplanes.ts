@@ -1,56 +1,65 @@
 import { z } from "zod";
-export { AirplaneSchema } from "../../prisma/generated/zod";
+import {
+  AirplaneSchema as GeneratedAirplaneSchema,
+  ManufacturerSchema as GeneratedManufacturerSchema,
+} from "../../prisma/generated/zod";
+import { yearSchema } from "./common";
 
-const year = new Date().getFullYear();
-
-export const SeedAirplaneSchema = z.object({
-  manufacturer: z.string().nonempty(), // Airbus, Boeing, etc.
-  family: z.string().nonempty(), // A320, 737, etc.
-  year: z // 1988, 1967, etc.
-    .number()
-    .int("Year must be an integer")
-    .positive("Year must be positive")
-    .min(1900, { message: "Year must be minimum of 1900" })
-    .max(year, { message: "Year must be maximum of this year" })
-    .optional(),
+export const AirplaneSchema = GeneratedAirplaneSchema.extend({
+  year: yearSchema,
 });
 
-export const InputAirplaneSchema = z.object({
-  manufacturer: z.string(), // slug
-  family: z.string(),
+export const AirplaneWithManufacturerSchema = AirplaneSchema.extend({
+  manufacturer: GeneratedManufacturerSchema,
+});
+
+export const AirplaneCreateSchema = z.object({
+  manufacturer: z
+    .string()
+    .nonempty({ message: "Airplane manufacturer name is required" }),
+  family: z.string().nonempty({ message: "Airplane family name is required" }),
+  year: yearSchema,
+});
+
+export type CreateInputAirplane = z.infer<typeof AirplaneCreateSchema>;
+
+export const SeedAirplaneSchema = z.object({
+  manufacturerName: z.string().nonempty(), // Airbus, Boeing, etc.
+  family: z.string().nonempty(), // A320, 737, etc.
+  year: yearSchema,
 });
 
 export type SeedAirplane = z.infer<typeof SeedAirplaneSchema>;
 
-export const dataAirplanes: SeedAirplane[] = [
+export const seedDataAirplanes: SeedAirplane[] = [
   {
-    manufacturer: "Airbus",
+    manufacturerName: "Airbus",
     family: "A320",
-    // year: 1988,
+    year: 1988,
   },
   {
-    manufacturer: "Boeing",
+    manufacturerName: "Boeing",
     family: "B737",
-    // year: 1967,
+    year: 1967,
   },
   {
-    manufacturer: "Boeing",
+    manufacturerName: "Boeing",
     family: "B747",
-    // year: 1999,
+    year: 1999,
   },
   {
-    manufacturer: "Airbus",
+    manufacturerName: "Airbus",
     family: "A380",
-    // year: 2000,
+    year: 2000,
   },
   {
-    manufacturer: "Embraer",
+    manufacturerName: "Embraer",
     family: "E190",
-    // year: 2000,
+    year: 2000,
   },
   {
-    manufacturer: "Bombardier",
+    manufacturerName: "Bombardier",
     family: "CRJ",
-    // year: 2000,
+    year: 2000,
   },
 ];

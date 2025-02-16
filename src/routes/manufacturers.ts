@@ -6,6 +6,7 @@ import {
   PrismaManufacturerSchema,
 } from "../data/manufacturers";
 import { prisma } from "../lib/prisma";
+import { convertSlug } from "../lib/slug";
 
 export const manufacturersRoute = new OpenAPIHono();
 
@@ -79,10 +80,9 @@ manufacturersRoute.openapi(
   async (c) => {
     const body = c.req.valid("json");
 
-    console.log(body.slug ? body.slug : slugify(body.name, { lower: true }));
     const newManufacturerData = {
       ...body,
-      slug: body.slug ? body.slug : slugify(body.name, { lower: true }),
+      slug: body.slug ?? convertSlug(body.name),
     };
 
     try {

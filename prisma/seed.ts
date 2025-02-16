@@ -1,39 +1,38 @@
-import { dataAirplanes, SeedAirplane } from "../src/data/airplanes";
+import { seedDataAirplanes } from "../src/data/airplanes";
 import { prisma } from "../src/lib/prisma";
-import slugify from "slugify";
+import { convertSlug } from "../src/lib/slug";
 
 async function seedAirplanes() {
   // await prisma.airplane.deleteMany();
   // await prisma.manufacturer.deleteMany();
 
-  for (const airplane of dataAirplanes) {
-    const airplaneSlug = slugify(
-      `${airplane.manufacturer}-${airplane.family}`,
-      { lower: true }
+  for (const seedDataAirplane of seedDataAirplanes) {
+    const airplaneSlug = convertSlug(
+      `${seedDataAirplane.manufacturerName}-${seedDataAirplane.family}`
     );
 
-    const manufacturerSlug = slugify(airplane.manufacturer, { lower: true });
+    const manufacturerSlug = convertSlug(seedDataAirplane.manufacturerName);
 
-    const airplaneData = {
+    const { manufacturerName, ...airplane } = seedDataAirplane;
+
+    const airplaneInput = {
+      ...airplane,
       slug: airplaneSlug,
-      family: airplane.family,
       manufacturer: {
         connectOrCreate: {
           where: { slug: manufacturerSlug },
           create: {
             slug: manufacturerSlug,
-            name: airplane.manufacturer,
+            name: seedDataAirplane.manufacturerName,
           },
         },
       },
     };
 
     const newAirplane = await prisma.airplane.upsert({
-      where: {
-        slug: airplaneSlug,
-      },
-      create: airplaneData,
-      update: airplaneData,
+      where: { slug: airplaneSlug },
+      create: airplaneInput,
+      update: airplaneInput,
     });
 
     console.info(`✈️ ${newAirplane.slug}`);

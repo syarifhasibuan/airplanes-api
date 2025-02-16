@@ -7,8 +7,12 @@ generator client {
   provider = "prisma-client-js" // @prisma/client
 }
 
-generator zod {
+generator zodTypes {
   provider = "zod-prisma-types"
+}
+
+generator zodGen {
+  provider = "prisma-zod-generator"
 }
 
 generator erd {
@@ -24,6 +28,8 @@ model Airplane {
   manufacturerId String
 
   year Int @default(2025) // 1900 - 2025
+
+  // TODO
   // price Decimal @db.Money // "123.45"
   // price Int
   // price Float
