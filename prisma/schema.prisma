@@ -1,16 +1,18 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js" // @prisma/client
+}
+
+generator zod {
+  provider = "zod-prisma-types"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
 }
 
 model Airplane {
@@ -21,8 +23,7 @@ model Airplane {
   manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
   manufacturerId String
 
-  // TODO
-  // year  Int
+  year Int @default(2025) // 1900 - 2025
   // price Decimal @db.Money // "123.45"
   // price Int
   // price Float

@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { PrismaAirplaneSchema, InputAirplaneSchema } from "../data/airplanes";
+import { AirplaneSchema, InputAirplaneSchema } from "../data/airplanes";
 import { prisma } from "../lib/prisma";
 import slugify from "slugify";
 
@@ -20,7 +20,7 @@ airplanesRoute.openapi(
       200: {
         description: "Get all airplanes",
         content: {
-          "application/json": { schema: z.array(PrismaAirplaneSchema) },
+          "application/json": { schema: z.array(AirplaneSchema) },
         },
       },
     },
@@ -47,7 +47,7 @@ airplanesRoute.openapi(
       404: { description: "Airplane not found" },
       200: {
         description: "Get one airplane by slug",
-        content: { "application/json": { schema: PrismaAirplaneSchema } },
+        content: { "application/json": { schema: AirplaneSchema } },
       },
     },
   }),
@@ -84,7 +84,7 @@ airplanesRoute.openapi(
     responses: {
       201: {
         description: "New airplane added",
-        content: { "application/json": { schema: PrismaAirplaneSchema } },
+        content: { "application/json": { schema: AirplaneSchema } },
       },
       400: { description: "New airplane failed" },
     },
@@ -212,7 +212,7 @@ airplanesRoute.openapi(
     responses: {
       200: {
         description: "Airplane updated",
-        content: { "application/json": { schema: PrismaAirplaneSchema } },
+        content: { "application/json": { schema: AirplaneSchema } },
       },
       400: { description: "Update airplane failed" },
     },

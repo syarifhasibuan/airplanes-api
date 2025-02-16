@@ -1,18 +1,9 @@
 import { z } from "zod";
+export { AirplaneSchema } from "../../prisma/generated/zod";
 
 const year = new Date().getFullYear();
 
-export const PrismaAirplaneSchema = z.object({
-  id: z.string(),
-  slug: z.string(),
-  manufacturerId: z.string(),
-  family: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
-
 export const SeedAirplaneSchema = z.object({
-  id: z.string().optional(), // 1, 2, 3, etc.
   manufacturer: z.string().nonempty(), // Airbus, Boeing, etc.
   family: z.string().nonempty(), // A320, 737, etc.
   year: z // 1988, 1967, etc.
@@ -22,7 +13,6 @@ export const SeedAirplaneSchema = z.object({
     .min(1900, { message: "Year must be minimum of 1900" })
     .max(year, { message: "Year must be maximum of this year" })
     .optional(),
-  isAvailable: z.boolean().optional(),
 });
 
 export const InputAirplaneSchema = z.object({
