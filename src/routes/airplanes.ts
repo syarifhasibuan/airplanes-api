@@ -47,7 +47,13 @@ airplanesRoute.openapi(
       const airplanes = await prisma.airplane.findMany({
         include: { manufacturer: true },
       });
-      return c.json(airplanes, { status: 200 });
+      return c.json(
+        airplanes.map((airplane) => ({
+          ...airplane,
+          price: Number(airplane.price),
+        })),
+        { status: 200 }
+      );
     } catch (error) {
       console.error(error);
       return c.json(
@@ -149,7 +155,10 @@ airplanesRoute.openapi(
         include: { manufacturer: true },
       });
 
-      return c.json(newAirplane, { status: 201 });
+      return c.json(
+        { ...newAirplane, price: Number(newAirplane.price) },
+        { status: 201 }
+      );
     } catch (error) {
       console.error(error);
       return c.json(
@@ -317,6 +326,7 @@ airplanesRoute.openapi(
           slug: airplaneSlug,
           family: body.family,
           year: body.year,
+          price: body.price,
           manufacturer: {
             connectOrCreate: {
               where: { slug: manufacturerSlug },
@@ -327,7 +337,10 @@ airplanesRoute.openapi(
         include: { manufacturer: true },
       });
 
-      return c.json(updatedAirplane, { status: 200 });
+      return c.json(
+        { ...updatedAirplane, price: Number(updatedAirplane.price) },
+        { status: 200 }
+      );
     } catch (error) {
       console.error(error);
       return c.json({ message: "Update airplane failed", slug, error }, 400);

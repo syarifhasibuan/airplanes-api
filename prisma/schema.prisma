@@ -25,10 +25,7 @@ model Airplane {
 
   year Int // 1900 - 2025
 
-  // TODO
-  // price Decimal @db.Money // "123.45"
-  // price Int
-  // price Float
+  price Decimal @db.Money
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -5,8 +5,13 @@ import {
 } from "../../prisma/generated/zod";
 import { yearSchema } from "./common";
 
+export const priceSchema = z.coerce
+  .number()
+  .min(0, { message: "Price must be positive" });
+
 export const AirplaneSchema = GeneratedAirplaneSchema.extend({
   year: yearSchema,
+  price: priceSchema,
 });
 
 export const AirplaneWithManufacturerSchema = AirplaneSchema.extend({
@@ -19,6 +24,7 @@ export const AirplaneCreateSchema = z.object({
     .nonempty({ message: "Airplane manufacturer name is required" }),
   family: z.string().nonempty({ message: "Airplane family name is required" }),
   year: yearSchema,
+  price: priceSchema,
 });
 
 // Question: How to make it optional?

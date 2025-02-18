@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Airplane" ADD COLUMN     "price" MONEY NOT NULL DEFAULT 0.0,
+ALTER COLUMN "year" DROP DEFAULT;
