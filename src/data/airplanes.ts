@@ -21,6 +21,19 @@ export const AirplaneCreateSchema = z.object({
   year: yearSchema,
 });
 
+// Question: How to make it optional?
+export const AirplaneUpdateSchema = AirplaneCreateSchema.extend({
+  manufacturer: z
+    .string()
+    .nonempty({ message: "Airplane manufacturer name is required" })
+    .optional(),
+  family: z
+    .string()
+    .nonempty({ message: "Airplane family name is required" })
+    .optional(),
+  year: yearSchema.optional(),
+});
+
 export type CreateInputAirplane = z.infer<typeof AirplaneCreateSchema>;
 
 export const SeedAirplaneSchema = z.object({

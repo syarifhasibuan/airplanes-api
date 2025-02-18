@@ -1,14 +1,12 @@
 import { z } from "zod";
+import { ManufacturerSchema as GeneratedManufacturerSchema } from "../../prisma/generated/zod";
 
-export const PrismaManufacturerSchema = z.object({
-  id: z.string(),
-  slug: z.string(),
-  name: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
+export const ManufacturerSchema = GeneratedManufacturerSchema;
 
-export const InputManufacturerSchema = z.object({
-  slug: z.string().optional(),
+export const ManufacturerCreateSchema = z.object({
+  slug: z
+    .string()
+    .nonempty("Slug should contain at least one character")
+    .optional(),
   name: z.string(),
 });

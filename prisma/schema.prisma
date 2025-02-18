@@ -11,10 +11,6 @@ generator zodTypes {
   provider = "zod-prisma-types"
 }
 
-generator zodGen {
-  provider = "prisma-zod-generator"
-}
-
 generator erd {
   provider = "prisma-erd-generator"
 }
@@ -27,7 +23,7 @@ model Airplane {
   manufacturer   Manufacturer @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
   manufacturerId String
 
-  year Int @default(2025) // 1900 - 2025
+  year Int // 1900 - 2025
 
   // TODO
   // price Decimal @db.Money // "123.45"

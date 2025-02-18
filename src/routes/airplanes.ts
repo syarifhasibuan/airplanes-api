@@ -29,13 +29,35 @@ airplanesRoute.openapi(
           },
         },
       },
+      400: {
+        description: "Get all airplanes failed",
+        content: {
+          "application/json": {
+            schema: z.object({
+              message: z.string(),
+              error: z.any(),
+            }),
+          },
+        },
+      },
     },
   }),
   async (c) => {
-    const airplanes = await prisma.airplane.findMany({
-      include: { manufacturer: true },
-    });
-    return c.json(airplanes);
+    try {
+      const airplanes = await prisma.airplane.findMany({
+        include: { manufacturer: true },
+      });
+      return c.json(airplanes, { status: 200 });
+    } catch (error) {
+      console.error(error);
+      return c.json(
+        {
+          message: "Get all airplanes failed",
+          error,
+        },
+        400
+      );
+    }
   }
 );
 
@@ -67,7 +89,7 @@ airplanesRoute.openapi(
 
     if (!airplane) return c.notFound();
 
-    return c.json(airplane);
+    return c.json(airplane, { status: 200 });
   }
 );
 
@@ -92,7 +114,17 @@ airplanesRoute.openapi(
         description: "New airplane added",
         content: { "application/json": { schema: AirplaneSchema } },
       },
-      400: { description: "New airplane failed" },
+      400: {
+        description: "New airplane failed",
+        content: {
+          "application/json": {
+            schema: z.object({
+              message: z.string(),
+              error: z.any(),
+            }),
+          },
+        },
+      },
     },
   }),
   async (c) => {
@@ -106,6 +138,7 @@ airplanesRoute.openapi(
         data: {
           slug: airplaneSlug,
           family: body.family,
+          year: body.year,
           manufacturer: {
             connectOrCreate: {
               where: { slug: manufacturerSlug },
@@ -116,7 +149,7 @@ airplanesRoute.openapi(
         include: { manufacturer: true },
       });
 
-      return c.json(newAirplane);
+      return c.json(newAirplane, { status: 201 });
     } catch (error) {
       console.error(error);
       return c.json(
@@ -139,12 +172,50 @@ airplanesRoute.openapi(
     method: "delete",
     path: "/",
     responses: {
-      200: { description: "All airplanes data deleted" },
+      200: {
+        description: "All airplanes data deleted",
+        content: {
+          "application/json": {
+            schema: z.object({
+              message: z.string(),
+              result: z.object({ count: z.number() }).optional(),
+            }),
+          },
+        },
+      },
+      400: {
+        description: "All airplanes data deleted failed",
+        content: {
+          "application/json": {
+            schema: z.object({
+              message: z.string(),
+              error: z.any(),
+            }),
+          },
+        },
+      },
     },
   }),
   async (c) => {
-    const result = await prisma.airplane.deleteMany();
-    return c.json({ message: "All airplanes data deleted", result });
+    try {
+      const result = await prisma.airplane.deleteMany();
+      return c.json(
+        {
+          message: "All airplanes data deleted",
+          result: { count: result.count },
+        },
+        200
+      );
+    } catch (error) {
+      console.error(error);
+      return c.json(
+        {
+          message: "All airplanes data deleted failed",
+          error,
+        },
+        400
+      );
+    }
   }
 );
 
@@ -210,7 +281,7 @@ airplanesRoute.openapi(
       params: z.object({ slug: z.string() }),
       body: {
         description: "New airplane data to update",
-        content: { "application/json": { schema: AirplaneCreateSchema } },
+        content: { "application/json": { schema: AirplaneCreateSchema } }, // Question: How to make it optional?
       },
     },
     responses: {
@@ -218,7 +289,18 @@ airplanesRoute.openapi(
         description: "Airplane updated",
         content: { "application/json": { schema: AirplaneSchema } },
       },
-      400: { description: "Update airplane failed" },
+      400: {
+        description: "Update airplane failed",
+        content: {
+          "application/json": {
+            schema: z.object({
+              message: z.string(),
+              slug: z.string(),
+              error: z.any(),
+            }),
+          },
+        },
+      },
     },
   }),
   async (c) => {
@@ -234,6 +316,7 @@ airplanesRoute.openapi(
         data: {
           slug: airplaneSlug,
           family: body.family,
+          year: body.year,
           manufacturer: {
             connectOrCreate: {
               where: { slug: manufacturerSlug },
@@ -244,7 +327,7 @@ airplanesRoute.openapi(
         include: { manufacturer: true },
       });
 
-      return c.json(updatedAirplane);
+      return c.json(updatedAirplane, { status: 200 });
     } catch (error) {
       console.error(error);
       return c.json({ message: "Update airplane failed", slug, error }, 400);
