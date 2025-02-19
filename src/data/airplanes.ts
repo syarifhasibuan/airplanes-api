@@ -3,15 +3,16 @@ import {
   AirplaneSchema as GeneratedAirplaneSchema,
   ManufacturerSchema as GeneratedManufacturerSchema,
 } from "../../prisma/generated/zod";
-import { yearSchema } from "./common";
+import { YearSchema } from "./common";
+import { Prisma } from "@prisma/client";
 
-export const priceSchema = z.coerce
-  .number()
-  .min(0, { message: "Price must be positive" });
+export const PriceSchema = z
+  .instanceof(Prisma.Decimal)
+  .refine((price) => price.gte("0.01"));
 
 export const AirplaneSchema = GeneratedAirplaneSchema.extend({
-  year: yearSchema,
-  price: priceSchema,
+  year: YearSchema,
+  price: PriceSchema,
 });
 
 export const AirplaneWithManufacturerSchema = AirplaneSchema.extend({
@@ -23,8 +24,8 @@ export const AirplaneCreateSchema = z.object({
     .string()
     .nonempty({ message: "Airplane manufacturer name is required" }),
   family: z.string().nonempty({ message: "Airplane family name is required" }),
-  year: yearSchema,
-  price: priceSchema,
+  year: YearSchema,
+  price: PriceSchema,
 });
 
 // Question: How to make it optional?
@@ -37,7 +38,7 @@ export const AirplaneUpdateSchema = AirplaneCreateSchema.extend({
     .string()
     .nonempty({ message: "Airplane family name is required" })
     .optional(),
-  year: yearSchema.optional(),
+  year: YearSchema.optional(),
 });
 
 export type CreateInputAirplane = z.infer<typeof AirplaneCreateSchema>;
@@ -45,7 +46,7 @@ export type CreateInputAirplane = z.infer<typeof AirplaneCreateSchema>;
 export const SeedAirplaneSchema = z.object({
   manufacturerName: z.string().nonempty(), // Airbus, Boeing, etc.
   family: z.string().nonempty(), // A320, 737, etc.
-  year: yearSchema,
+  year: YearSchema,
 });
 
 export type SeedAirplane = z.infer<typeof SeedAirplaneSchema>;

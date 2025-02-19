@@ -3,11 +3,13 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { airplanesRoute } from "./routes/airplanes";
 import { manufacturersRoute } from "./routes/manufacturers";
+import { commonRoute } from "./routes/common";
 
 const app = new OpenAPIHono();
 
 app
   .basePath("/")
+  .route("/", commonRoute)
   .route("/airplanes", airplanesRoute)
   .route("/manufacturers", manufacturersRoute)
   .doc("/openapi.json", {

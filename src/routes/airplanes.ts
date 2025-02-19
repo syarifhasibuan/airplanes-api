@@ -8,6 +8,7 @@ import {
 } from "../data/airplanes";
 import { prisma } from "../lib/prisma";
 import { convertSlug } from "../lib/slug";
+import { ResponseErrorSchema } from "../data/common";
 
 export const airplanesRoute = new OpenAPIHono();
 
@@ -31,14 +32,7 @@ airplanesRoute.openapi(
       },
       400: {
         description: "Get all airplanes failed",
-        content: {
-          "application/json": {
-            schema: z.object({
-              message: z.string(),
-              error: z.any(),
-            }),
-          },
-        },
+        content: { "application/json": { schema: ResponseErrorSchema } },
       },
     },
   }),
@@ -47,22 +41,61 @@ airplanesRoute.openapi(
       const airplanes = await prisma.airplane.findMany({
         include: { manufacturer: true },
       });
-      return c.json(
-        airplanes.map((airplane) => ({
-          ...airplane,
-          price: Number(airplane.price),
-        })),
-        { status: 200 }
-      );
+
+      return c.json(airplanes, 200);
     } catch (error) {
       console.error(error);
-      return c.json(
-        {
-          message: "Get all airplanes failed",
-          error,
+      return c.json({ message: "Get all airplanes failed", error }, 400);
+    }
+  }
+);
+
+// GET /airplanes/search?keyword=... [{...}]
+airplanesRoute.openapi(
+  createRoute({
+    tags,
+    summary: "Search airplanes",
+    method: "get",
+    path: "/search",
+    request: {
+      query: z.object({
+        q: z.string().nonempty().optional(),
+        manufacturer: z.string().nonempty().optional(),
+      }),
+    },
+    responses: {
+      200: {
+        description: "Search airplanes",
+        content: {
+          "application/json": {
+            schema: z.array(AirplaneWithManufacturerSchema),
+          },
         },
-        400
-      );
+      },
+      400: {
+        description: "Search airplanes failed",
+        content: { "application/json": { schema: ResponseErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    let { q } = c.req.valid("query");
+
+    try {
+      const airplanes = await prisma.airplane.findMany({
+        where: {
+          OR: [
+            { family: { contains: q, mode: "insensitive" } },
+            { slug: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        include: { manufacturer: true },
+      });
+
+      return c.json(airplanes, 200);
+    } catch (error) {
+      console.error(error);
+      return c.json({ message: "Search airplanes failed", error }, 400);
     }
   }
 );
@@ -100,72 +133,6 @@ airplanesRoute.openapi(
   }
 );
 
-// GET /airplanes/search?name=... [{...}]
-airplanesRoute.openapi(
-  createRoute({
-    tags,
-    summary: "Search airplanes",
-    method: "get",
-    path: "/search",
-    request: {
-      query: z.object({
-        family: z.string().optional(),
-        manufacturer: z.string().optional(),
-      }),
-    },
-    responses: {
-      200: {
-        description: "Search airplanes",
-        content: {
-          "application/json": {
-            schema: z.array(AirplaneWithManufacturerSchema),
-          },
-        },
-      },
-      400: {
-        description: "Search airplanes failed",
-        content: {
-          "application/json": {
-            schema: z.object({
-              message: z.string(),
-              error: z.any(),
-            }),
-          },
-        },
-      },
-    },
-  }),
-  async (c) => {
-    const { family, manufacturer } = c.req.valid("query");
-
-    console.log(c.req.valid("query"));
-
-    try {
-      const airplanes = await prisma.airplane.findMany({
-        where: { family },
-        include: { manufacturer: true },
-      });
-
-      return c.json(
-        airplanes.map((airplane) => ({
-          ...airplane,
-          price: Number(airplane.price),
-        })),
-        { status: 200 }
-      );
-    } catch (error) {
-      console.error(error);
-      return c.json(
-        {
-          message: "Search airplanes failed",
-          error,
-        },
-        400
-      );
-    }
-  }
-);
-
 // ✅ POST /airplanes
 airplanesRoute.openapi(
   createRoute({
@@ -186,14 +153,7 @@ airplanesRoute.openapi(
       },
       400: {
         description: "New airplane failed",
-        content: {
-          "application/json": {
-            schema: z.object({
-              message: z.string(),
-              error: z.any(),
-            }),
-          },
-        },
+        content: { "application/json": { schema: ResponseErrorSchema } },
       },
     },
   }),
@@ -209,6 +169,7 @@ airplanesRoute.openapi(
           slug: airplaneSlug,
           family: body.family,
           year: body.year,
+          price: body.price,
           manufacturer: {
             connectOrCreate: {
               where: { slug: manufacturerSlug },
@@ -219,18 +180,11 @@ airplanesRoute.openapi(
         include: { manufacturer: true },
       });
 
-      return c.json(
-        { ...newAirplane, price: Number(newAirplane.price) },
-        { status: 201 }
-      );
+      return c.json(newAirplane, 201);
     } catch (error) {
       console.error(error);
       return c.json(
-        {
-          message: "New airplane failed",
-          slug: airplaneSlug,
-          error,
-        },
+        { message: "New airplane failed", slug: airplaneSlug, error },
         400
       );
     }
@@ -258,14 +212,7 @@ airplanesRoute.openapi(
       },
       400: {
         description: "All airplanes data deleted failed",
-        content: {
-          "application/json": {
-            schema: z.object({
-              message: z.string(),
-              error: z.any(),
-            }),
-          },
-        },
+        content: { "application/json": { schema: ResponseErrorSchema } },
       },
     },
   }),
@@ -282,10 +229,7 @@ airplanesRoute.openapi(
     } catch (error) {
       console.error(error);
       return c.json(
-        {
-          message: "All airplanes data deleted failed",
-          error,
-        },
+        { message: "All airplanes data deleted failed", error },
         400
       );
     }
@@ -307,11 +251,14 @@ airplanesRoute.openapi(
         description: "Airplane deleted",
         content: {
           "application/json": {
-            schema: z.object({ message: z.string(), result: z.unknown() }),
+            schema: z.object({ message: z.string(), result: AirplaneSchema }),
           },
         },
       },
-      400: { description: "Delete airplane failed" },
+      400: {
+        description: "Delete airplane failed",
+        content: { "application/json": { schema: ResponseErrorSchema } },
+      },
     },
   }),
   async (c) => {
@@ -364,15 +311,7 @@ airplanesRoute.openapi(
       },
       400: {
         description: "Update airplane failed",
-        content: {
-          "application/json": {
-            schema: z.object({
-              message: z.string(),
-              slug: z.string(),
-              error: z.any(),
-            }),
-          },
-        },
+        content: { "application/json": { schema: ResponseErrorSchema } },
       },
     },
   }),
@@ -401,10 +340,7 @@ airplanesRoute.openapi(
         include: { manufacturer: true },
       });
 
-      return c.json(
-        { ...updatedAirplane, price: Number(updatedAirplane.price) },
-        { status: 200 }
-      );
+      return c.json(updatedAirplane, 200);
     } catch (error) {
       console.error(error);
       return c.json({ message: "Update airplane failed", slug, error }, 400);
