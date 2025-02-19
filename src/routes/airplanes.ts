@@ -87,6 +87,7 @@ airplanesRoute.openapi(
   }),
   async (c) => {
     const { slug } = c.req.valid("param");
+    console.log(slug);
 
     const airplane = await prisma.airplane.findUnique({
       where: { slug },
@@ -100,7 +101,70 @@ airplanesRoute.openapi(
 );
 
 // GET /airplanes/search?name=... [{...}]
-// TODO: LATER
+airplanesRoute.openapi(
+  createRoute({
+    tags,
+    summary: "Search airplanes",
+    method: "get",
+    path: "/search",
+    request: {
+      query: z.object({
+        family: z.string().optional(),
+        manufacturer: z.string().optional(),
+      }),
+    },
+    responses: {
+      200: {
+        description: "Search airplanes",
+        content: {
+          "application/json": {
+            schema: z.array(AirplaneWithManufacturerSchema),
+          },
+        },
+      },
+      400: {
+        description: "Search airplanes failed",
+        content: {
+          "application/json": {
+            schema: z.object({
+              message: z.string(),
+              error: z.any(),
+            }),
+          },
+        },
+      },
+    },
+  }),
+  async (c) => {
+    const { family, manufacturer } = c.req.valid("query");
+
+    console.log(c.req.valid("query"));
+
+    try {
+      const airplanes = await prisma.airplane.findMany({
+        where: { family },
+        include: { manufacturer: true },
+      });
+
+      return c.json(
+        airplanes.map((airplane) => ({
+          ...airplane,
+          price: Number(airplane.price),
+        })),
+        { status: 200 }
+      );
+    } catch (error) {
+      console.error(error);
+      return c.json(
+        {
+          message: "Search airplanes failed",
+          error,
+        },
+        400
+      );
+    }
+  }
+);
 
 // ✅ POST /airplanes
 airplanesRoute.openapi(
