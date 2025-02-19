@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "build": "bun install && bun db:migrate:deploy && bun db:gen",
+    "build": "bun install && bun db:migrate:deploy && bun db:gen:prod",
     "start": "bun db:migrate:deploy && bun db:gen && bun run src/index.ts",
     "typecheck": "tsc --noEmit",
     "docker:up": "docker compose up -d",
@@ -11,6 +11,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:gen": "prisma generate --no-hints",
+    "db:gen:prod": "prisma generate --no-hints --generator client --generator zod",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
   },
